@@ -1,0 +1,7 @@
+# ignore the builds
+/target
+**/*.rs.bk
+
+# ignore and soundfonts and dlls
+*.dll
+*.sf2

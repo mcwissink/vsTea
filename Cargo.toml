@@ -1,0 +1,10 @@
+[package]
+name = "vsTea"
+version = "0.1.0"
+authors = ["Mark Wissink <mwissink.b@gmail.com>"]
+
+[dependencies]
+midir = "0.5.0"
+
+[dependencies.fluidsynth]
+git = "https://github.com/mcwissink/rust-fluidsynth"
