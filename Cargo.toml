@@ -7,4 +7,4 @@ authors = ["Mark Wissink <mwissink.b@gmail.com>"]
 midir = "0.5.0"
 
 [dependencies.fluidsynth]
-git = "https://github.com/mcwissink/rust-fluidsynth"
+git = "https://github.com/elidupree/rust-fluidsynth"

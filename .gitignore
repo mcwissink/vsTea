@@ -1,4 +1,4 @@
-# ignore the builds
+/soundfonts
 /target
 **/*.rs.bk
 
