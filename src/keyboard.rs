@@ -18,6 +18,8 @@ impl SFSynth {
     pub fn new(min: u8, max: u8, root: i32) -> SFSynth {
         let mut settings = Settings::new();
         let mut synth = Synth::new(&mut settings);
+        // Temporary testing
+        synth.set_gain(2.0); // TODO: Eventually fix this
         let _driver = AudioDriver::new(&mut settings, &mut synth);
         SFSynth {
             settings: settings,
@@ -31,6 +33,9 @@ impl SFSynth {
 
     pub fn load(&self, filename: &str) {
         self.synth.sfload(filename, 1);
+        // for i in 0..59 {
+        //     println!("{}", self.synth.get_gen(0, 33 as i32));
+        // }
     }
 
     pub fn set_min(&mut self, min: u8) {
@@ -47,6 +52,9 @@ impl SFSynth {
 
     pub fn note_on(&mut self, channel: u8, note: u8, velocity: u8) {
         self.synth.noteon(channel as i32, (note as i32) + self.root, velocity as i32);
+        //self.synth.set_gen(0, 33, 2000.0);
+        // println!("{}", self.synth.set_gen(0, 33, 2000.0));
+        // println!("{}", self.synth.get_gen(0, 38));
     }
 
     pub fn note_off(&mut self, channel: u8, note: u8) {
@@ -54,6 +62,7 @@ impl SFSynth {
     }
 }
 
+/// Keyboard - stores all the logic for partitioning the keyboard
 pub struct Keyboard {
     sustain: bool,              // Whether the pedal is held or not
     partition: Vec<usize>,      // The keyboard partition, 0 means empty
@@ -71,8 +80,18 @@ impl Keyboard {
         }
     }
 
+    pub fn process(&mut self, stamp: u64, message: &[u8]) {
+        //println!("{}: {:?} (len = {})", stamp, message, message.len());
+        match message[0] {
+            //176 => { sustain = 127 == message[2]}
+            144 => { self.note_on(0, message[1], message[2]) }
+            128 => { self.note_off(0, message[1]) }
+            _ => ()
+        }
+    }
+
     pub fn note_on(&mut self, _channel: u8, note: u8, _velocity: u8) {
-        println!("{}", self.partition[note as usize]);
+        //println!("{}", self.partition[note as usize]);
         self.synths[self.partition[note as usize] - 1].note_on(_channel, note, _velocity);
     }
 
