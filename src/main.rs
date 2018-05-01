@@ -20,13 +20,13 @@ fn run() -> Result<(), Box<Error>> {
     let mut keyboard = keyboard::Keyboard::new();
     let mut menu = menu::Menu::new();
 
-    menu.printMenu();
-    menu.getChoice(&mut keyboard);
-    keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 65);
-    keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 61, 65);
-    keyboard.add_synth(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
-    keyboard.add_synth(".\\soundfonts\\Percussion\\ANCR P Hat 14.sf2", 37, 38, 37);
-    keyboard.add_synth(".\\soundfonts\\Percussion\\ANCR P Snare 0.sf2", 38, 39, 38);
+    //menu.printMenu();
+    //menu.getChoice(&mut keyboard);
+    keyboard.add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
+    keyboard.add_soundfont(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 60, 60);
+    keyboard.add_soundfont(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
+    keyboard.add_soundfont(".\\soundfonts\\Percussion\\ANCR P Hat 14.sf2", 37, 38, 37);
+    keyboard.add_soundfont(".\\soundfonts\\Percussion\\ANCR P Snare 0.sf2", 38, 39, 38);
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);

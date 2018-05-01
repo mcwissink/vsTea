@@ -36,6 +36,12 @@ impl Menu {
     fn loadFont(&mut self, mut keyboard: &mut Keyboard) {
         let mut filename = String::new();
         stdin().read_line(&mut filename);
-        keyboard.add_synth(&filename.trim(), 0, 127, 60);
+        keyboard.add_soundfont(&filename.trim(), 0, 127, 60);
     }
+
+    // fn getMidi(&mut self, mut )
+    //     println!("Available input ports:");
+    //     for i in 0..midi_in.port_count() {
+    //         println!("{}: {}", i, midi_in.port_name(i)?);
+    //     }
 }
