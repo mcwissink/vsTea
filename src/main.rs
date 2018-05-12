@@ -6,7 +6,7 @@ use std::io::stdin;
 use std::error::Error;
 use midir::{MidiInput};
 pub mod keyboard;
-//pub mod menu;
+pub mod menu;
 
 
 fn main() {
@@ -19,6 +19,7 @@ fn main() {
 
 fn run() -> Result<(), Box<Error>> {
     let keyboard = Arc::new(Mutex::new(keyboard::Keyboard::new()));
+    let mut menu = menu::Menu::new();
 
     //let mut keyboard = keyboard::Keyboard::new();
     //let mut menu = menu::Menu::new();
@@ -49,8 +50,11 @@ fn run() -> Result<(), Box<Error>> {
     }, ())?;
 
     //keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
-    let mut _input = String::new();
-    stdin().read_line(&mut _input)?; // wait for next enter key press
+    println!("Welcome to vsTea");
+    while menu.get_choice(&keyboard) {}
+
+    // let mut _input = String::new();
+    // stdin().read_line(&mut _input)?; // wait for next enter key press
     println!("Closing connections");
     Ok(())
 }

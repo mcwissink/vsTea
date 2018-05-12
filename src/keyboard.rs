@@ -101,7 +101,11 @@ impl Keyboard {
 
     pub fn add_soundfont(&mut self, filename: &str, min: usize, max: usize, root: i32) {
         // Load the SoundFont
-        let id = self.synth.sfload(filename, 1).unwrap();
+        let id = match self.synth.sfload(filename, 1) {
+            Some(x) => x,
+            None    => return, // FluidSynth handles appropiate error messages
+        };
+
         let sf_parition = SFParition::new(id, min, max, root);
         self.soundfonts.push(sf_parition);
 
@@ -116,13 +120,12 @@ impl Keyboard {
         }
     }
 
-    pub fn load_soundfont(&mut self) -> Result<(), Box<Error>> {
-        println!("Enter path to file: ");
-        let mut filename = String::new();
-        stdin().read_line(&mut filename)?;
-        self.add_soundfont(&filename.trim(), 0, 127, 60);
-        Ok(())
-    }
+    // pub fn load_soundfont(&mut self) -> Result<(), Box<Error>> {
+    //
+    //     stdin().read_line(&mut filename)?;
+    //     self.add_soundfont(&filename.trim(), 0, 127, 60);
+    //     Ok(())
+    // }
 
     pub fn list_channels(&mut self) {
         //let channels = self.synth.count_midi_channels();
