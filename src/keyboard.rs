@@ -1,5 +1,7 @@
 extern crate fluidsynth;
 
+use std::io::{stdin};
+use std::error::Error;
 use fluidsynth::settings::Settings;
 use fluidsynth::synth::Synth;
 use fluidsynth::audio::AudioDriver;
@@ -32,15 +34,15 @@ impl SFParition {
         self.max = max;
     }
 
-    pub fn set_root(&mut self, root: i32) {
-        self.root = 60 - root;
-    }
+    // pub fn set_root(&mut self, root: i32) {
+    //     self.root = 60 - root;
+    // }
 }
 
 /// Keyboard - stores all the logic for partitioning the keyboard
 pub struct Keyboard {
-    settings: Settings,
     synth: Synth,
+    _settings: Settings,
     _driver: AudioDriver,
     partition: Vec<i32>,             // The keyboard partition, 0 means empty
     soundfonts: Vec<SFParition>,       // Vector of synths
@@ -50,14 +52,14 @@ unsafe impl Send for Keyboard {} // TODO: guarentee thred safety of Keyboard
 
 impl Keyboard {
     pub fn new() -> Keyboard {
-        let mut settings = Settings::new();
-        let mut synth = Synth::new(&mut settings);
-        synth.set_gain(2.0); // TODO: Make this a function
-        let _driver = AudioDriver::new(&mut settings, &mut synth);
+        let mut _settings = Settings::new();
+        let mut synth = Synth::new(&mut _settings);
+        synth.set_gain(1.0); // TODO: Make this a function
+        let _driver = AudioDriver::new(&mut _settings, &mut synth);
 
         // Initialize our partition vector
         let mut partition: Vec<i32> = Vec::with_capacity(128);
-        for i in 0..127 {
+        for _ in 0..127 {
             partition.push(0);
         }
 
@@ -66,15 +68,18 @@ impl Keyboard {
 
         // Create the keyboard
         Keyboard {
-            settings: settings,
             synth: synth,
+            _settings: _settings,
             _driver: _driver,
             partition: partition,
             soundfonts: soundfonts,
         }
     }
 
-    pub fn process(&mut self, stamp: u64, message: &[u8]) {
+    /// Process a midi message
+    /// Recieve: _stamp - a time stamp
+    ///          message - the midi message
+    pub fn process(&mut self, _stamp: u64, message: &[u8]) {
         //println!("{}: {:?} (len = {})", stamp, message, message.len());
         match message[0] {
             176 => { /* Do something with sustain */ }
@@ -87,20 +92,20 @@ impl Keyboard {
     pub fn note_on(&mut self, note: i32, velocity: i32) {
         let channel = self.partition[note as usize];
         self.synth.noteon(channel, note + self.soundfonts[channel as usize].root, velocity);
-        //self.synths[self.partition[note as usize] - 1].note_on(_channel, note, _velocity);
     }
 
     pub fn note_off(&mut self, note: i32) {
         let channel = self.partition[note as usize];
         self.synth.noteoff(channel, note + self.soundfonts[channel as usize].root);
-        //self.synths[self.partition[note as usize] - 1].note_off(_channel, note);
     }
 
     pub fn add_soundfont(&mut self, filename: &str, min: usize, max: usize, root: i32) {
-        let id = self.synth.sfload(filename, 0).unwrap();
+        // Load the SoundFont
+        let id = self.synth.sfload(filename, 1).unwrap();
         let sf_parition = SFParition::new(id, min, max, root);
         self.soundfonts.push(sf_parition);
 
+        // Remap the SoundFonts to their resepctive channels
         for soundfont in &self.soundfonts {
             self.synth.program_select(soundfont.channel, soundfont.id, 0, 0);
         }
@@ -109,5 +114,28 @@ impl Keyboard {
         for i in min..max {
             self.partition[i] = self.soundfonts[(id - 1) as usize].channel;
         }
+    }
+
+    pub fn load_soundfont(&mut self) -> Result<(), Box<Error>> {
+        println!("Enter path to file: ");
+        let mut filename = String::new();
+        stdin().read_line(&mut filename)?;
+        self.add_soundfont(&filename.trim(), 0, 127, 60);
+        Ok(())
+    }
+
+    pub fn list_channels(&mut self) {
+        //let channels = self.synth.count_midi_channels();
+        let info = self.synth.get_channel_info(0);
+        match info {
+            Some(x) => println!("{}: {}", 0, x.name),
+            None    => println!("None"),
+        }
+    }
+
+    pub fn set_partition_max(&mut self, font: usize) {
+        self.synth.get_channel_info(font as i32);
+        println!("Enter path to file: ");
+        self.soundfonts[font].set_max(0)
     }
 }

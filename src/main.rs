@@ -1,11 +1,12 @@
 extern crate midir;
 extern crate fluidsynth;
 
+use std::sync::{Arc, Mutex};
 use std::io::stdin;
 use std::error::Error;
 use midir::{MidiInput};
 pub mod keyboard;
-pub mod menu;
+//pub mod menu;
 
 
 fn main() {
@@ -17,42 +18,39 @@ fn main() {
 
 
 fn run() -> Result<(), Box<Error>> {
-    let mut keyboard = keyboard::Keyboard::new();
-    let mut menu = menu::Menu::new();
+    let keyboard = Arc::new(Mutex::new(keyboard::Keyboard::new()));
 
-    //menu.printMenu();
-    //menu.getChoice(&mut keyboard);
-    keyboard.add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
-    keyboard.add_soundfont(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 60, 60);
-    keyboard.add_soundfont(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
-    keyboard.add_soundfont(".\\soundfonts\\Percussion\\ANCR P Hat 14.sf2", 37, 38, 37);
-    keyboard.add_soundfont(".\\soundfonts\\Percussion\\ANCR P Snare 0.sf2", 38, 39, 38);
+    //let mut keyboard = keyboard::Keyboard::new();
+    //let mut menu = menu::Menu::new();
+    keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
+    keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 60, 60);
+    keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
+    keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Hat 14.sf2", 37, 38, 37);
+    keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Snare 0.sf2", 38, 39, 38);
+    //keyboard.load_soundfont();
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
 
-    let mut input = String::new();
-    let mut midi_in = MidiInput::new("midir forwarding input")?;
+    let midi_in = MidiInput::new("in")?;
     //midi_in.ignore(Ignore::None);
-
-    println!("Available input ports:");
-    for i in 0..midi_in.port_count() {
-        println!("{}: {}", i, midi_in.port_name(i)?);
-    }
+    // Assume we are using the first port
+    println!("using port: {}", midi_in.port_name(0)?);
     // print!("Please select input port: ");
     // stdout().flush()?;
     // stdin().read_line(&mut input)?;
-    let in_port: usize = 0;
 
+    // Create a reference to the keyboard so callback thread and main thread can access keyboard_ref
+    let shared_keyboard = keyboard.clone();
     // _conn_in needs to be a named parameter, because it needs to be kept alive until the end of the scope
-    let _conn_in = midi_in.connect(in_port, "midir-forward", move |stamp, message, _| {
-        keyboard.process(stamp, message);
+    let _conn_in = midi_in.connect(0, "midi", move |stamp, message, _| {
+        shared_keyboard.lock().unwrap().process(stamp, message);
     }, ())?;
 
-    input.clear();
-    stdin().read_line(&mut input)?; // wait for next enter key press
-
+    //keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
+    let mut _input = String::new();
+    stdin().read_line(&mut _input)?; // wait for next enter key press
     println!("Closing connections");
     Ok(())
 }

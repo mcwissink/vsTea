@@ -13,31 +13,35 @@ impl Menu {
         }
     }
 
-    pub fn printMenu(&mut self) {
+    pub fn print_menu(&mut self) {
         println!("Welcome to vsTea
-        1 - choose MIDI input
-        2 - load SoundFont
-        3 - edit SoundFont");
+        1 - load SoundFont
+        2 - remove SoundFont
+        3 - exit");
     }
 
-    pub fn getChoice(&mut self, mut keyboard: &mut Keyboard) {
+    pub fn get_choice(&mut self, mut keyboard: &mut Keyboard) -> bool {
+        self.print_menu();
         let mut input = String::new();
         stdin().read_line(&mut input);
 
         let choice = input.trim().parse::<u32>();
 
         match choice {
-            Ok(1) => self.loadFont(&mut keyboard),
-            Ok(2) => self.loadFont(&mut keyboard),
+            Ok(1) => self.load_font(&mut keyboard),
+            Ok(2) => self.load_font(&mut keyboard),
+            Ok(3) => return false,
             _ => println!("Invalid choice"),
         }
+
+        return true;
     }
 
-    fn loadFont(&mut self, mut keyboard: &mut Keyboard) {
-        let mut filename = String::new();
-        stdin().read_line(&mut filename);
-        keyboard.add_soundfont(&filename.trim(), 0, 127, 60);
-    }
+    // fn load_font(&mut self, mut keyboard: &mut Keyboard) {
+    //     let mut filename = String::new();
+    //     stdin().read_line(&mut filename);
+    //     keyboard.add_soundfont(&filename.trim(), 0, 127, 60);
+    // }
 
     // fn getMidi(&mut self, mut )
     //     println!("Available input ports:");
