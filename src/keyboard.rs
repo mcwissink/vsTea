@@ -9,30 +9,16 @@ use fluidsynth::audio::AudioDriver;
 struct SFParition {
     id: u32,                // The id of the soundfont, analgous to the channel that the soundfont is on
     channel: i32,           // channel = 1 - id
-    min: usize,             // The lowest note this soundfont occupies
-    max: usize,             // The highest note this soundfont occupies
     root: i32,              // The offset from middle c (note = 60), allows for transposing
 }
 
 impl SFParition {
-    pub fn new(id: u32, min: usize, max: usize, root: usize) -> SFParition {
+    pub fn new(id: u32) -> SFParition {
         SFParition {
             id: id,
             channel: (id - 1) as i32,
-            min: min,
-            max: max,
-            root: 60 - (root as i32),
+            root: 0,
         }
-    }
-
-    pub fn set_min(&mut self, min: usize) {
-        println!("Setting min: {}", min);
-        self.min = min;
-    }
-
-    pub fn set_max(&mut self, max: usize) {
-        println!("Setting max: {}", max);
-        self.max = max + 1; // Adding the 1 for user understanding
     }
 
     pub fn set_root(&mut self, root: usize) {
@@ -115,7 +101,7 @@ impl Keyboard {
     /// Receive: filename - a path to the SoundFont
     ///          min, max, root: parition values
     /// Return: the SoundFont id
-    pub fn add_soundfont(&mut self, filename: &str, min: usize, max: usize, root: usize) -> u32 {
+    pub fn add_soundfont(&mut self, filename: &str) -> u32 {
         // Load the SoundFont
         let id = match self.synth.sfload(filename, 1) {
             Some(i) => i,
@@ -123,7 +109,7 @@ impl Keyboard {
         };
 
         // Add our partition
-        let sf_parition = SFParition::new(id, min, max, root);
+        let sf_parition = SFParition::new(id);
         self.soundfonts.push(sf_parition);
 
         // Remap the SoundFonts to their respective channels
@@ -133,23 +119,6 @@ impl Keyboard {
 
         return id;
     }
-
-    /// Updates the keyboard partition
-    pub fn partition_all(&mut self) {
-        for font in &self.soundfonts {
-            for i in font.min..font.max {
-                self.partition[i] = font.channel;
-            }
-        }
-    }
-
-    /// Only update 1 soundfont partition
-    // pub fn partition_soundfont(&mut self, font: usize) {
-    //     let soundfont = &self.soundfonts[font];
-    //     for i in soundfont.min..soundfont.max {
-    //         self.partition[i] = soundfont.channel;
-    //     }
-    // }
 
     // TODO: Figure out how to list what is on the midi channels
     // pub fn list_channels(&mut self) {
@@ -164,15 +133,47 @@ impl Keyboard {
     /// Set a partition value for a SoundFont
     pub fn set_soundfont_partition(&mut self, font: usize, parameter: &str, value: usize) {
         {
+
             let soundfont = &mut self.soundfonts[font];
             match parameter {
-                "max" => soundfont.set_max(value),
-                "min" => soundfont.set_min(value),
+                "max" => {
+                    // Set a starting point
+                    self.partition[value] = soundfont.channel;
+                    let mut min: usize = 127;
+                    // Find our minimum value in the partition
+                    for i in 0..127 {
+                        if self.partition[i] == soundfont.channel {
+                            min = i;
+                            break;
+                        }
+                    }
+
+                    // Start from the minimum value and write to our max
+                    for i in min..value {
+                        self.partition[i] = soundfont.channel;
+                    }
+                },
+                "min" => {
+                    // Set a starting point
+                    self.partition[value] = soundfont.channel;
+                    let mut max: usize = 0;
+                    // Find our maximum value in the partition
+                    for i in (0..127).rev()  {
+                        if self.partition[i] == soundfont.channel {
+                            max = i;
+                            break;
+                        }
+                    }
+
+                    // Start from the minimum value and write to our max
+                    for i in value..max {
+                        self.partition[i] = soundfont.channel;
+                    }
+                },
                 "root" => soundfont.set_root(value),
                 _ => println!("Invalid parameter"),
             }
         }
-        self.partition_all();
     }
 
     pub fn toggle_debug(&mut self) {
