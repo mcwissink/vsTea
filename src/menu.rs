@@ -1,7 +1,7 @@
 
 
 /// Menu - keeps data related to the menu
-pub mod Menu {
+pub mod menu {
     use std::sync::{Arc, Mutex};
     use std::io::{stdin, stdout, Write};
     use keyboard::Keyboard;
@@ -16,9 +16,9 @@ pub mod Menu {
     pub fn get_choice(keyboard: &Arc<Mutex<Keyboard>>) -> bool {
         print_menu();
         print!("vsTea: ");
-        stdout().flush();
+        stdout().flush().unwrap();
         let mut input = String::new();
-        stdin().read_line(&mut input);
+        stdin().read_line(&mut input).unwrap();
 
         let choice = input.trim().parse::<u32>();
 
@@ -36,30 +36,28 @@ pub mod Menu {
     /// Lets user load specified SoundFont
     pub fn load_font(keyboard: &Arc<Mutex<Keyboard>>) {
         print!("Enter path to file: ");
-        stdout().flush();
+        stdout().flush().unwrap();
         let mut filename = String::new();
-        stdin().read_line(&mut filename);
+        stdin().read_line(&mut filename).unwrap();
         let font = keyboard.lock().unwrap().add_soundfont(&filename.trim().replace("\"", ""), 0, 127, 60) - 1;
-        if font >= 0 {
-            set_font_param(font as usize, "min", &keyboard);
-            set_font_param(font as usize, "max", &keyboard);
-            set_font_param(font as usize, "root", &keyboard);
-        }
-
+        set_font_param(font as usize, "min", &keyboard);
+        set_font_param(font as usize, "max", &keyboard);
+        set_font_param(font as usize, "root", &keyboard);
     }
 
-    fn choose_font() -> usize {
-        print!("Select SoundFont: ");
-        stdout().flush();
-        let mut input = String::new();
-        stdin().read_line(&mut input);
-        let soundfont = input.trim().parse::<usize>();
-        match soundfont {
-            Ok(font) => return font,
-            Err(err) => println!("Invalid SoundFont"),
-        }
-        return 0;
-    }
+    // TODO: use this when Keyboard.list_channels is working
+    // fn choose_font() -> usize {
+    //     print!("Select SoundFont: ");
+    //     stdout().flush();
+    //     let mut input = String::new();
+    //     stdin().read_line(&mut input);
+    //     let soundfont = input.trim().parse::<usize>();
+    //     match soundfont {
+    //         Ok(font) => return font,
+    //         Err(err) => println!("Invalid SoundFont"),
+    //     }
+    //     return 0;
+    // }
 
     // TODO: decide on how to edit partitions, and how they overwrite each other
     // fn edit_font(&mut self, keyboard: &Arc<Mutex<Keyboard>>) {
@@ -81,13 +79,13 @@ pub mod Menu {
     /// Sets a partition parameter of a SoundFont
     fn set_font_param(font: usize, parameter: &str, keyboard: &Arc<Mutex<Keyboard>>) {
         print!("Enter {} value (0-127): ", parameter);
-        stdout().flush();
+        stdout().flush().unwrap();
         let mut input = String::new();
-        stdin().read_line(&mut input);
+        stdin().read_line(&mut input).unwrap();
         let value = input.trim().parse::<usize>();
         match value {
             Ok(val) => keyboard.lock().unwrap().set_soundfont_partition(font, parameter, val),
-            Err(err) => println!("Invalid value"),
+            Err(err) => println!("Invalid value - {}", err),
         }
     }
 

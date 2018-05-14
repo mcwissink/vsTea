@@ -1110,7 +1110,7 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "vsTea"
+name = "vstea"
 version = "0.1.0"
 dependencies = [
  "fluidsynth 0.0.1 (git+https://github.com/elidupree/rust-fluidsynth)",

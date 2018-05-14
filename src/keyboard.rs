@@ -1,8 +1,6 @@
 extern crate fluidsynth;
 
 use std::sync::{Arc, Mutex};
-use std::io::{stdin};
-use std::error::Error;
 use fluidsynth::settings::Settings;
 use fluidsynth::synth::Synth;
 use fluidsynth::audio::AudioDriver;
@@ -65,7 +63,7 @@ impl Keyboard {
         let _driver = AudioDriver::new(&mut _settings, &mut synth);
 
         // Initialize our partition vector
-        let mut partition: Vec<i32> = vec![0; 128];
+        let partition: Vec<i32> = vec![0; 128];
 
         // Initialize our soundfont vector
         let soundfonts: Vec<SFParition> = Vec::new();
@@ -146,21 +144,22 @@ impl Keyboard {
     }
 
     /// Only update 1 soundfont partition
-    pub fn partition_soundfont(&mut self, font: usize) {
-        let soundfont = &self.soundfonts[font];
-        for i in soundfont.min..soundfont.max {
-            self.partition[i] = soundfont.channel;
-        }
-    }
+    // pub fn partition_soundfont(&mut self, font: usize) {
+    //     let soundfont = &self.soundfonts[font];
+    //     for i in soundfont.min..soundfont.max {
+    //         self.partition[i] = soundfont.channel;
+    //     }
+    // }
 
-    pub fn list_channels(&mut self) {
-        //let channels = self.synth.count_midi_channels();
-        let info = self.synth.get_channel_info(0);
-        match info {
-            Some(x) => println!("{}: {}", 0, x.name),
-            None    => println!("None"),
-        }
-    }
+    // TODO: Figure out how to list what is on the midi channels
+    // pub fn list_channels(&mut self) {
+    //     //let channels = self.synth.count_midi_channels();
+    //     let info = self.synth.get_channel_info(0);
+    //     match info {
+    //         Some(x) => println!("{}: {}", 0, x.name),
+    //         None    => println!("None"),
+    //     }
+    // }
 
     /// Set a partition value for a SoundFont
     pub fn set_soundfont_partition(&mut self, font: usize, parameter: &str, value: usize) {

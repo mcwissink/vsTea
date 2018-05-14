@@ -4,7 +4,6 @@ extern crate piston_window;
 
 use piston_window::*;
 use std::sync::{Arc, Mutex};
-use std::io::stdin;
 use std::error::Error;
 use std::thread;
 use midir::{MidiInput};
@@ -14,7 +13,7 @@ mod menu;
 
 fn main() {
     // Notes is going to be shared between threads so it is necessary to wrap it in a Arc and Mutex to ensure thread safety
-    let mut notes: Vec<f32> = vec![0.005; 128];
+    let notes: Vec<f32> = vec![0.005; 128];
     let notes1 = Arc::new(Mutex::new(notes));
     let notes2 = notes1.clone();
     // Spawn the command line thread
@@ -26,8 +25,9 @@ fn main() {
     });
 
     // Start our gui window
+    let (rows, columns): (usize, usize) = (12, 11);
     let opengl = OpenGL::V3_2;
-    let (width, height) = (16*50, 8*50);
+    let (width, height) = (50 * rows as u32, 50 * columns as u32);
     let mut window: PistonWindow =
         WindowSettings::new("vsTea", (width, height))
             .exit_on_esc(true)
@@ -40,10 +40,15 @@ fn main() {
                 clear([0.0; 4], g);
                 // Unlock notes2 once so we don't have to lock it 128 times
                 let notes3 = notes2.lock().unwrap();
-                for i in 0..16 {
-                    for j in 0..8 {
+                for i in 0..rows {
+                    for j in 0..columns {
                         let transform = c.transform.trans(50.0 * i as f64, 50.0 * j as f64);
-                        rectangle([1.0, 1.0, 1.0, notes3[i + j * 16] as f32],
+                        let index: usize = i + j * rows;
+                        let mut opacity: f32 = 0.005;
+                        if index < 127 {
+                            opacity = notes3[index] as f32;
+                        }
+                        rectangle([1.0, 1.0, 1.0, opacity],
                                   [5.0, 5.0, 45.0, 45.0],
                                   transform, g);
                     }
@@ -65,7 +70,7 @@ fn run(notes: &Arc<Mutex<Vec<f32>>>) -> Result<(), Box<Error>> {
     // Mutex makes sure both threads aren't access the keyboard at the same time
     let keyboard = Arc::new(Mutex::new(keyboard::Keyboard::new()));
 
-    // TODO: eventually remove these, simply here for convieniance 
+    // TODO: eventually remove these, simply here for convieniance
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 60, 60);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
@@ -75,7 +80,7 @@ fn run(notes: &Arc<Mutex<Vec<f32>>>) -> Result<(), Box<Error>> {
 
     // Ensure we have a SoundFont before we start hitting keys
     println!("Welcome to vsTea - please load a SoundFont");
-    menu::Menu::load_font(&keyboard);
+    menu::menu::load_font(&keyboard);
 
     // Setup midi
     let midi_in = MidiInput::new("in")?;
@@ -90,7 +95,7 @@ fn run(notes: &Arc<Mutex<Vec<f32>>>) -> Result<(), Box<Error>> {
     }, ())?;
 
     // Start the menu
-    while menu::Menu::get_choice(&keyboard) { /* Wait for user to exit menu */ }
+    while menu::menu::get_choice(&keyboard) { /* Wait for user to exit menu */ }
 
     // End the process
     println!("Closing connections");
