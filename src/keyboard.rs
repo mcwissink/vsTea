@@ -34,7 +34,7 @@ impl SFParition {
 
     pub fn set_max(&mut self, max: usize) {
         println!("Setting max: {}", max);
-        self.max = max;
+        self.max = max + 1; // Adding the 1 for user understanding
     }
 
     pub fn set_root(&mut self, root: usize) {
@@ -101,8 +101,7 @@ impl Keyboard {
 
     /// Set the note value and play the sound
     pub fn note_on(&mut self, note: i32, velocity: i32, notes: &Arc<Mutex<Vec<f32>>>) {
-        println!("{:?}", self.partition);
-        notes.lock().unwrap()[note as usize] = velocity as f32 / 127.0;
+        notes.lock().unwrap()[note as usize] = velocity as f32 / 127.0; // This basically controlls the color of the GUI
         let channel = self.partition[note as usize];
         self.synth.noteon(channel, note + self.soundfonts[channel as usize].root, velocity);
     }
@@ -163,6 +162,7 @@ impl Keyboard {
         }
     }
 
+    /// Set a partition value for a SoundFont
     pub fn set_soundfont_partition(&mut self, font: usize, parameter: &str, value: usize) {
         {
             let soundfont = &mut self.soundfonts[font];

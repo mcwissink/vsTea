@@ -64,8 +64,8 @@ fn run(notes: &Arc<Mutex<Vec<f32>>>) -> Result<(), Box<Error>> {
     // Arc keeps track of how many references and calls destructor accordingly
     // Mutex makes sure both threads aren't access the keyboard at the same time
     let keyboard = Arc::new(Mutex::new(keyboard::Keyboard::new()));
-    let mut menu = menu::Menu::new();
 
+    // TODO: eventually remove these, simply here for convieniance 
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 60, 60);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
@@ -73,6 +73,11 @@ fn run(notes: &Arc<Mutex<Vec<f32>>>) -> Result<(), Box<Error>> {
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Snare 0.sf2", 38, 39, 38);
     keyboard.lock().unwrap().partition_all();
 
+    // Ensure we have a SoundFont before we start hitting keys
+    println!("Welcome to vsTea - please load a SoundFont");
+    menu::Menu::load_font(&keyboard);
+
+    // Setup midi
     let midi_in = MidiInput::new("in")?;
     // Assume we are using the first port
     println!("using port: {}", midi_in.port_name(0)?);
@@ -85,8 +90,7 @@ fn run(notes: &Arc<Mutex<Vec<f32>>>) -> Result<(), Box<Error>> {
     }, ())?;
 
     // Start the menu
-    println!("Welcome to vsTea");
-    while menu.get_choice(&keyboard) { /* Wait for user to exit menu */ }
+    while menu::Menu::get_choice(&keyboard) { /* Wait for user to exit menu */ }
 
     // End the process
     println!("Closing connections");
