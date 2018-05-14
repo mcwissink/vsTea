@@ -18,29 +18,23 @@ fn main() {
 
 
 fn run() -> Result<(), Box<Error>> {
+    // Create a new keyboard and menu instance
+    // We need to protect the keyboard with an Arc and Mutex
+    // Arc keeps track of how many references and calls destructor accordingly
+    // Mutex makes sure both threads aren't access the keyboard at the same time
     let keyboard = Arc::new(Mutex::new(keyboard::Keyboard::new()));
     let mut menu = menu::Menu::new();
 
-    //let mut keyboard = keyboard::Keyboard::new();
-    //let mut menu = menu::Menu::new();
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I Bass Elec 0.sf2", 0, 60, 60);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Kick 4.sf2", 36, 37, 36);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Hat 14.sf2", 37, 38, 37);
     keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Percussion\\ANCR P Snare 0.sf2", 38, 39, 38);
-    //keyboard.load_soundfont();
-    // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
-    // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
-    // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
-    // keyboard.add_synth(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
+    keyboard.lock().unwrap().partition_all();
 
     let midi_in = MidiInput::new("in")?;
-    //midi_in.ignore(Ignore::None);
     // Assume we are using the first port
     println!("using port: {}", midi_in.port_name(0)?);
-    // print!("Please select input port: ");
-    // stdout().flush()?;
-    // stdin().read_line(&mut input)?;
 
     // Create a reference to the keyboard so callback thread and main thread can access keyboard_ref
     let shared_keyboard = keyboard.clone();
@@ -49,12 +43,11 @@ fn run() -> Result<(), Box<Error>> {
         shared_keyboard.lock().unwrap().process(stamp, message);
     }, ())?;
 
-    //keyboard.lock().unwrap().add_soundfont(".\\soundfonts\\Instruments\\ANCR I E Piano 15.sf2", 0, 127, 60);
+    // Start the menu
     println!("Welcome to vsTea");
-    while menu.get_choice(&keyboard) {}
+    while menu.get_choice(&keyboard) { /* Wait for user to exit menu */ }
 
-    // let mut _input = String::new();
-    // stdin().read_line(&mut _input)?; // wait for next enter key press
+    // End the process
     println!("Closing connections");
     Ok(())
 }
