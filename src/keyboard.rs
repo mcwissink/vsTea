@@ -1,5 +1,6 @@
 extern crate fluidsynth;
 
+use std::sync::{Arc, Mutex};
 use std::io::{stdin};
 use std::error::Error;
 use fluidsynth::settings::Settings;
@@ -37,7 +38,7 @@ impl SFParition {
     }
 
     pub fn set_root(&mut self, root: usize) {
-        println!("Setting root: {}", 60 - (root as i32));
+        println!("Setting root: {}", root);
         self.root = 60 - (root as i32);
     }
 }
@@ -52,7 +53,9 @@ pub struct Keyboard {
     debug: bool,                       // Prints midi messages
 }
 
-unsafe impl Send for Keyboard {} // TODO: guarentee thred safety of Keyboard
+// We need to let our keyboard be shared among threads
+// This is unsafe, but our keyboard will be protected by a lock
+unsafe impl Send for Keyboard {}
 
 impl Keyboard {
     pub fn new() -> Keyboard {
@@ -62,10 +65,7 @@ impl Keyboard {
         let _driver = AudioDriver::new(&mut _settings, &mut synth);
 
         // Initialize our partition vector
-        let mut partition: Vec<i32> = Vec::with_capacity(128);
-        for _ in 0..127 {
-            partition.push(0);
-        }
+        let mut partition: Vec<i32> = vec![0; 128];
 
         // Initialize our soundfont vector
         let soundfonts: Vec<SFParition> = Vec::new();
@@ -84,7 +84,7 @@ impl Keyboard {
     /// Process a midi message
     /// Receive: stamp - a time stamp
     ///          message - the midi message
-    pub fn process(&mut self, stamp: u64, message: &[u8]) {
+    pub fn process(&mut self, stamp: u64, message: &[u8], notes: &Arc<Mutex<Vec<f32>>>) {
         // We ignore message 254 since it is just Active Sensing, it's just the keyboard pinging the computer
         // The message clutters the screen so don't print it
         if self.debug && message[0] != 254 {
@@ -92,19 +92,24 @@ impl Keyboard {
         }
 
         match message[0] {
-            176 => { /* Do something with sustain */ }
-            144 => { self.note_on(message[1] as i32, message[2] as i32) }
-            128 => { self.note_off(message[1] as i32) }
+            176 => { /*TODO: Do something with sustain */ }
+            144 => { self.note_on(message[1] as i32, message[2] as i32, &notes) }
+            128 => { self.note_off(message[1] as i32, &notes) }
             _ => ()
         }
     }
 
-    pub fn note_on(&mut self, note: i32, velocity: i32) {
+    /// Set the note value and play the sound
+    pub fn note_on(&mut self, note: i32, velocity: i32, notes: &Arc<Mutex<Vec<f32>>>) {
+        println!("{:?}", self.partition);
+        notes.lock().unwrap()[note as usize] = velocity as f32 / 127.0;
         let channel = self.partition[note as usize];
         self.synth.noteon(channel, note + self.soundfonts[channel as usize].root, velocity);
     }
 
-    pub fn note_off(&mut self, note: i32) {
+    /// Reset the note value and stop the sound
+    pub fn note_off(&mut self, note: i32, notes: &Arc<Mutex<Vec<f32>>>) {
+        notes.lock().unwrap()[note as usize] = 0.005;
         let channel = self.partition[note as usize];
         self.synth.noteoff(channel, note + self.soundfonts[channel as usize].root);
     }
@@ -112,13 +117,15 @@ impl Keyboard {
     /// Add a SoundFont to the synth
     /// Receive: filename - a path to the SoundFont
     ///          min, max, root: parition values
-    pub fn add_soundfont(&mut self, filename: &str, min: usize, max: usize, root: usize) {
+    /// Return: the SoundFont id
+    pub fn add_soundfont(&mut self, filename: &str, min: usize, max: usize, root: usize) -> u32 {
         // Load the SoundFont
         let id = match self.synth.sfload(filename, 1) {
-            Some(x) => x,
-            None    => return, // FluidSynth handles appropiate error messages
+            Some(i) => i,
+            None    => 0,
         };
 
+        // Add our partition
         let sf_parition = SFParition::new(id, min, max, root);
         self.soundfonts.push(sf_parition);
 
@@ -126,6 +133,8 @@ impl Keyboard {
         for font in &self.soundfonts {
             self.synth.program_select(font.channel, font.id, 0, 0);
         }
+
+        return id;
     }
 
     /// Updates the keyboard partition
@@ -164,7 +173,7 @@ impl Keyboard {
                 _ => println!("Invalid parameter"),
             }
         }
-        self.partition_soundfont(font);
+        self.partition_all();
     }
 
     pub fn toggle_debug(&mut self) {

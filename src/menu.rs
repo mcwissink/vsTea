@@ -48,7 +48,13 @@ impl Menu {
         stdout().flush();
         let mut filename = String::new();
         stdin().read_line(&mut filename);
-        keyboard.lock().unwrap().add_soundfont(&filename.trim().replace("\"", ""), 0, 127, 60);
+        let font = keyboard.lock().unwrap().add_soundfont(&filename.trim().replace("\"", ""), 0, 127, 60) - 1;
+        if font >= 0 {
+            self.edit_font_param(font as usize, "min", &keyboard);
+            self.edit_font_param(font as usize, "max", &keyboard);
+            self.edit_font_param(font as usize, "root", &keyboard);
+        }
+
     }
 
     fn choose_font(&mut self) -> usize {
