@@ -1,6 +1,4 @@
-
-
-/// Menu - keeps data related to the menu
+/// Menu - functionality for the menu
 pub mod menu {
     use std::sync::{Arc, Mutex};
     use std::io::{stdin, stdout, Write};
@@ -20,7 +18,7 @@ pub mod menu {
         stdout().flush().unwrap();
         let mut input = String::new();
         stdin().read_line(&mut input).unwrap();
-        input = input.to_string().to_lowercase().trim().to_string();
+        input = input.to_lowercase().trim().to_string();
         let num_choice = input.parse::<u32>();
 
         match num_choice {
@@ -34,7 +32,7 @@ pub mod menu {
                     "edit" => edit_font(&keyboard),
                     "debug" => keyboard.lock().unwrap().toggle_debug(),
                     "quit" | "exit" => return false,
-                    _ => println!("Invalid Input")
+                    _ => println!("Invalid Choice"),
                 }
             },
         }
@@ -86,11 +84,23 @@ pub mod menu {
         stdout().flush().unwrap();
         let mut input = String::new();
         stdin().read_line(&mut input).unwrap();
-        let value = input.trim().parse::<usize>();
-        match value {
-            Ok(val) => keyboard.lock().unwrap().set_soundfont_partition(font, parameter, val),
-            Err(err) => println!("Invalid value - {}", err),
+        input = input.trim().to_string();
+
+        if input == "" {
+            match parameter {
+                "min" => keyboard.lock().unwrap().set_soundfont_partition(font, parameter, 0),
+                "max" => keyboard.lock().unwrap().set_soundfont_partition(font, parameter, 127),
+                "root" => keyboard.lock().unwrap().set_soundfont_partition(font, parameter, 60),
+                _ => println!("Invalid parameter"),
+            }
+        } else {
+            let value = input.parse::<usize>();
+            match value {
+                Ok(val) => keyboard.lock().unwrap().set_soundfont_partition(font, parameter, val),
+                Err(err) => println!("Invalid value - {}", err),
+            }
         }
+
     }
 
     // TODO: Be able to choose a midi connection
