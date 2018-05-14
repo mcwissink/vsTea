@@ -1,3 +1,8 @@
+/// menu - provides functionality for the menu
+///
+/// @author: Mark Wissink for CS 214 at Calvin College
+/// @date: 05/13/18
+
 /// Menu - functionality for the menu
 pub mod menu {
     use std::sync::{Arc, Mutex};

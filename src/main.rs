@@ -1,3 +1,8 @@
+/// vsTea main - the main driver for vsTea
+///
+/// @author: Mark Wissink for CS 214 at Calvin College
+/// @date: 05/13/18
+
 extern crate midir;
 extern crate fluidsynth;
 extern crate piston_window;

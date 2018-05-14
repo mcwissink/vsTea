@@ -1,3 +1,8 @@
+/// keyboard - handles midi events and keyboard partitioning
+///
+/// @author: Mark Wissink for CS 214 at Calvin College
+/// @date: 05/13/18
+
 extern crate fluidsynth;
 
 use std::sync::{Arc, Mutex};
